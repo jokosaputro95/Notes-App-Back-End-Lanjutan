@@ -1,26 +1,29 @@
 const ClientError = require('../../exceptions/ClientError');
 
-class UsersHandler {
-    constructor(service, validator) {
-        this._service = service;
+class CollaborationsHandler {
+    constructor(collaborationsService, notesService, validator) {
+        this._collaborationsService = collaborationsService;
+        this._notesService = notesService;
         this._validator = validator;
 
-        this.postUserHandler = this.postUserHandler.bind(this);
-        this.getUserByIdHandler = this.getUserByIdHandler.bind(this);
+        this.postCollaborationHandler = this.postCollaborationHandler.bind(this);
+        this.deleteCollaborationHandler = this.deleteCollaborationHandler.bind(this);
     }
 
-    async postUserHandler(request, h) {
+    async postCollaborationHandler(request, h) {
         try {
-            this._validator.validateUserPayload(request.payload);
-            const { username, password, fullname } = request.payload;
+            this._validator.validateCollaborationPayload(request.payload);
+            const { id: credentialId } = request.auth.credentials;
+            const { noteId, userId } = request.payload;
 
-            const userId = await this._service.addUser({ username, password, fullname });
+            await this._notesService.verifyNoteOwner(noteId, credentialId);
+            const collaborationId = await this._collaborationsService.addCollaboration(noteId, userId);
 
             const response = h.response({
                 status: 'success',
-                message: 'User berhasil ditambahkan',
+                message: 'Kolaborasi berhasil ditambahkan',
                 data: {
-                    userId,
+                    collaborationId,
                 },
             });
             response.code(201);
@@ -46,15 +49,18 @@ class UsersHandler {
         }
     }
 
-    async getUserByIdHandler(request, h) {
+    async deleteCollaborationHandler(request, h) {
         try {
-            const { id } = request.params;
-            const user = await this._service.getUserById(id);
+            this._validator.validateCollaborationPayload(request.payload);
+            const { id: credentialId } = request.auth.credentials;
+            const { noteId, userId } = request.payload;
+
+            await this._notesService.verifyNoteOwner(noteId, credentialId);
+            await this._collaborationsService.deleteCollaboration(noteId, userId);
+
             return {
                 status: 'success',
-                data: {
-                    user,
-                },
+                message: 'Kolaborasi berhasil dihapus',
             };
         } catch (error) {
             if (error instanceof ClientError) {
@@ -66,7 +72,7 @@ class UsersHandler {
                 return response;
             }
 
-            // server ERROR!
+            // Server ERROR!
             const response = h.response({
                 status: 'error',
                 message: 'Maaf, terjadi kegagalan pada server kami.',
@@ -78,4 +84,4 @@ class UsersHandler {
     }
 }
 
-module.exports = UsersHandler;
+module.exports = CollaborationsHandler;

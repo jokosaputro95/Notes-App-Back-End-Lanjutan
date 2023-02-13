@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 
-exports.up = pgm => {
+exports.up = (pgm) => {
     pgm.createTable('users', {
         id: {
             type: 'VARCHAR(50)',
@@ -8,6 +8,7 @@ exports.up = pgm => {
         },
         username: {
             type: 'VARCHAR(50)',
+            unique: true,
             notNull: true,
         },
         password: {
@@ -21,6 +22,6 @@ exports.up = pgm => {
     });
 };
 
-exports.down = pgm => {
+exports.down = (pgm) => {
     pgm.dropTable('users');
 };

@@ -26,7 +26,7 @@ const TokenManager = {
             const { payload } = artifacts.decoded;
             return payload;
         } catch (error) {
-            throw new InvariantError('Refresh token tidak vald');
+            throw new InvariantError('Refresh token tidak valid');
         }
     },
 };

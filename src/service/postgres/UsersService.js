@@ -10,16 +10,8 @@ class UsersService {
         this._pool = new Pool();
     }
 
-    // Fungsi Add User
-    async addUser({
-        username,
-        password,
-        fullname
-    }) {
-        // TODO : Verifikasi username, pastikan belum terdaftar
-        await this.verfiyNewUsername(username);
-        
-        // TODO : Bila verifikasi lolos, maka masukan user baru ke database.
+    async addUser({ username, password, fullname }) {
+        await this.verifyNewUsername(username);
         const id = `user-${nanoid(16)}`;
         const hashedPassword = await bcrypt.hash(password, 10);
         const query = {
@@ -32,12 +24,10 @@ class UsersService {
         if (!result.rows.length) {
             throw new InvariantError('User gagal ditambahkan');
         }
-
         return result.rows[0].id;
     }
 
-    // Fungsi Verifikasi User Baru
-    async verfiyNewUsername(username) {
+    async verifyNewUsername(username) {
         const query = {
             text: 'SELECT username FROM users WHERE username = $1',
             values: [username],
@@ -46,11 +36,10 @@ class UsersService {
         const result = await this._pool.query(query);
 
         if (result.rows.length > 0) {
-            throw new InvariantError('Gagal menambahkan user. Username sudah digunakan.')
+            throw new InvariantError('Gagal menambahkan user. Username sudah digunakan.');
         }
     }
 
-    // Fungsi Get User By Id
     async getUserById(userId) {
         const query = {
             text: 'SELECT id, username, fullname FROM users WHERE id = $1',
@@ -59,14 +48,13 @@ class UsersService {
 
         const result = await this._pool.query(query);
 
-        if (!result.rows.length) { // coba di ganti menggunakan rowCount yang seharusnya rows.length
+        if (!result.rows.length) {
             throw new NotFoundError('User tidak ditemukan');
         }
 
         return result.rows[0];
     }
 
-    // Fungsi Verifikasi User Credential
     async verifyUserCredential(username, password) {
         const query = {
             text: 'SELECT id, password FROM users WHERE username = $1',
@@ -89,7 +77,6 @@ class UsersService {
 
         return id;
     }
-
 }
 
 module.exports = UsersService;
